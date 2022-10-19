@@ -1,18 +1,16 @@
 import type {FileInfo, API, Options} from 'jscodeshift';
-import postcss, {Plugin} from 'postcss';
+import postcss from 'postcss';
 import valueParser from 'postcss-value-parser';
 
-import {POLARIS_MIGRATOR_COMMENT} from '../../constants';
 import {
-  createInlineComment,
   getFunctionArgs,
   isNumericOperator,
   isSassFunction,
   isTransformableLength,
   namespace,
-  NamespaceOptions,
   toTransformablePx,
   StopWalkingFunctionNodes,
+  createPlugin,
 } from '../../utilities/sass';
 import {isKeyOf} from '../../utilities/type-guards';
 
@@ -26,87 +24,81 @@ export default function replaceSpacingLengths(
   }).css;
 }
 
-const processed = Symbol('processed');
-
-interface PluginOptions extends Options, NamespaceOptions {}
-
-const plugin = (options: PluginOptions = {}): Plugin => {
+const plugin = createPlugin('replace-sass-space', (options = {}) => {
   const namespacedRem = namespace('rem', options);
 
-  return {
-    postcssPlugin: 'replace-sass-space',
-    Declaration(decl) {
-      // @ts-expect-error - Skip if processed so we don't process it again
-      if (decl[processed]) return;
+  return (decl, {report, context}) => {
+    if (!spaceProps.has(decl.prop)) return;
 
-      if (!spaceProps.has(decl.prop)) return;
+    let hasNumericOperator = false;
 
-      /**
-       * A collection of transformable values to migrate (e.g. decl lengths, functions, etc.)
-       *
-       * Note: This is evaluated at the end of each visitor execution to determine whether
-       * or not to replace the declaration or insert a comment.
-       */
-      const targets: {replaced: boolean}[] = [];
-      let hasNumericOperator = false;
-      const parsedValue = valueParser(decl.value);
+    handleSpaceProps();
 
-      handleSpaceProps();
+    if (hasNumericOperator) {
+      report({
+        severity: 'warning',
+        message: 'Numeric operator detected.',
+      });
+    }
 
-      if (targets.some(({replaced}) => !replaced || hasNumericOperator)) {
-        decl.before(
-          createInlineComment(POLARIS_MIGRATOR_COMMENT, {prose: true}),
-        );
-        decl.before(
-          createInlineComment(`${decl.prop}: ${parsedValue.toString()};`),
-        );
-      } else {
-        decl.value = parsedValue.toString();
-      }
+    function handleSpaceProps() {
+      decl.parsedValue.walk((node) => {
+        if (node.type === 'word') {
+          if (globalValues.has(node.value)) return;
+          if (isNumericOperator(node)) {
+            hasNumericOperator = true;
+            return;
+          }
 
-      //
-      // Handlers
-      //
+          const dimension = valueParser.unit(node.value);
 
-      function handleSpaceProps() {
-        parsedValue.walk((node) => {
-          if (node.type === 'word') {
-            if (globalValues.has(node.value)) return;
-            if (isNumericOperator(node)) {
-              hasNumericOperator = true;
-              return;
-            }
+          if (!isTransformableLength(dimension)) return;
 
-            const dimension = valueParser.unit(node.value);
+          const valueInPx = toTransformablePx(node.value);
 
-            if (!isTransformableLength(dimension)) return;
+          if (!isKeyOf(spaceMap, valueInPx)) {
+            report({
+              severity: 'error',
+              message: `Non-tokenizable value '${node.value}'`,
+            });
+            return;
+          }
 
-            targets.push({replaced: false});
-
-            const valueInPx = toTransformablePx(node.value);
-
-            if (!isKeyOf(spaceMap, valueInPx)) return;
-
-            targets.at(-1)!.replaced = true;
-
+          if (context.fix) {
             node.value = `var(${spaceMap[valueInPx]})`;
             return;
           }
 
-          if (node.type === 'function') {
-            if (isSassFunction(namespacedRem, node)) {
-              targets.push({replaced: false});
+          report({
+            severity: 'error',
+            message: `Prefer var(${spaceMap[valueInPx]}) Polaris token.`,
+          });
+          return;
+        }
 
-              const args = getFunctionArgs(node);
+        if (node.type === 'function') {
+          if (isSassFunction(namespacedRem, node)) {
+            const args = getFunctionArgs(node);
 
-              if (args.length !== 1) return;
+            if (args.length !== 1) {
+              report({
+                severity: 'error',
+                message: `Expected 1 argument, got ${args.length}`,
+              });
+              return;
+            }
 
-              const valueInPx = toTransformablePx(args[0]);
+            const valueInPx = toTransformablePx(args[0]);
 
-              if (!isKeyOf(spaceMap, valueInPx)) return;
+            if (!isKeyOf(spaceMap, valueInPx)) {
+              report({
+                severity: 'error',
+                message: `Non-tokenizable value '${args[0].trim()}'`,
+              });
+              return;
+            }
 
-              targets.at(-1)!.replaced = true;
-
+            if (context.fix) {
               node.value = 'var';
               node.nodes = [
                 {
@@ -116,15 +108,20 @@ const plugin = (options: PluginOptions = {}): Plugin => {
                   sourceEndIndex: spaceMap[valueInPx].length,
                 },
               ];
+              return;
             }
-
-            return StopWalkingFunctionNodes;
+            report({
+              severity: 'error',
+              message: `Prefer var(${spaceMap[valueInPx]}) Polaris token.`,
+            });
           }
-        });
-      }
-    },
+
+          return StopWalkingFunctionNodes;
+        }
+      });
+    }
   };
-};
+});
 
 const globalValues = new Set(['inherit', 'initial', 'unset']);
 

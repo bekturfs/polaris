@@ -1,4 +1,5 @@
-import postcss from 'postcss';
+import type {Options} from 'jscodeshift';
+import postcss, {Root, Plugin, Declaration, Helpers} from 'postcss';
 import valueParser, {
   Node,
   ParsedValue,
@@ -7,6 +8,9 @@ import valueParser, {
 } from 'postcss-value-parser';
 import {toPx} from '@shopify/polaris-tokens';
 import prettier from 'prettier';
+import onChange from 'on-change';
+
+import {POLARIS_MIGRATOR_COMMENT} from '../constants';
 
 const defaultNamespace = '';
 
@@ -240,4 +244,138 @@ export function createInlineComment(text: string, options?: {prose?: boolean}) {
   comment.raws.inline = true;
 
   return comment;
+}
+
+interface PluginOptions extends Options, NamespaceOptions {}
+
+interface Context {
+  fix: boolean;
+}
+
+interface ParsedValueDeclaration extends Declaration {
+  parsedValue: ParsedValue;
+  report: () => void;
+}
+
+interface Report {
+  severity: 'warning' | 'error';
+  message: string;
+}
+
+interface PluginContext {
+  // TODO: what type is this?
+  report: (report: Report) => void;
+  context: Context;
+}
+
+export function createPlugin(
+  name: string,
+  fn: (
+    options: PluginOptions,
+  ) => (decl: ParsedValueDeclaration, helpers: PluginContext) => void,
+) {
+  const processed = Symbol('processed');
+
+  interface ProcessedDeclaration extends ParsedValueDeclaration {
+    [processed]?: boolean;
+  }
+
+  // postcss doesn't export this, so had to extract it to here
+  type DeclarationProcessor = (decl: Declaration) => false | void;
+
+  const rule = (_: undefined, options: PluginOptions, context: Context) => {
+    const declWalker = fn(options);
+    return (postcssRoot: Root) => {
+      // TODO: Validate options
+      postcssRoot.walkDecls(((decl: ProcessedDeclaration, _: Helpers) => {
+        // Skip if processed so we don't process it again
+        if (decl[processed]) return;
+
+        let isDirty = false;
+
+        decl.parsedValue = valueParser(decl.value);
+        decl.parsedValue.nodes = onChange(decl.parsedValue.nodes, () => {
+          isDirty = true;
+        });
+
+        const reports: Report[] = [];
+
+        declWalker(decl as ParsedValueDeclaration, {
+          context,
+          report: (report) => {
+            if (
+              reports.findIndex(
+                (existingReport) =>
+                  existingReport.severity === report.severity &&
+                  existingReport.message === report.message,
+              ) === -1
+            ) {
+              reports.push(report);
+            }
+          },
+        });
+
+        const commentReports = () => {
+          if (!reports.length) {
+            return;
+          }
+          decl.before(
+            createInlineComment(POLARIS_MIGRATOR_COMMENT, {prose: true}),
+          );
+          reports.forEach((report) => {
+            decl.before(
+              createInlineComment(`${report.severity}: ${report.message}`, {
+                prose: true,
+              }),
+            );
+          });
+        };
+
+        // TODO: When moving to style-lint, migrate this to call style-lint's
+        // stylelint.utils.report()
+        const stylelintReports = commentReports;
+
+        if (context.fix) {
+          if (reports.length) {
+            if (options.reportingStyleWhileFixing === 'comment') {
+              commentReports();
+              if (isDirty) {
+                decl.before(
+                  createInlineComment(
+                    `${decl.prop}: ${decl.parsedValue.toString()};`,
+                  ),
+                );
+              }
+            } else {
+              stylelintReports();
+              if (isDirty) {
+                decl.value = decl.parsedValue.toString();
+              }
+            }
+          } else if (isDirty) {
+            decl.value = decl.parsedValue.toString();
+          }
+        } else {
+          stylelintReports();
+        }
+
+        // Mark the declaration as processed
+        decl[processed] = true;
+      }) as DeclarationProcessor);
+    };
+  };
+
+  // This shim makes our stylelint plugin above compatible with postcss
+  return (options: PluginOptions = {}): Plugin => {
+    return {
+      postcssPlugin: name,
+      Root(root: Root) {
+        rule(
+          undefined,
+          {...options, reportingStyleWhileFixing: 'comment'},
+          {fix: true},
+        )(root);
+      },
+    };
+  };
 }
