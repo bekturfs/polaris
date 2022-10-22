@@ -1,7 +1,7 @@
 {
   "name": "@bekturfs/polaris",
   "publishConfig": {
-    "registry": "https://npm.pkg.github.com/bekturfs"
+    "@bekturfs:registry": "https://npm.pkg.github.com"
   },
   "version": "0.0.1",
   "private": true,
