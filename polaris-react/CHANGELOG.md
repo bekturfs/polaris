@@ -1,5 +1,40 @@
 # Changelog
 
+## 10.9.0
+
+### Minor Changes
+
+- [#7450](https://github.com/Shopify/polaris/pull/7450) [`74237ebc5`](https://github.com/bekturfs/polaris/commit/74237ebc5b6d2be84fde128e6947e468d9cc2624) Thanks [@laurkim](https://github.com/laurkim)! - Added support for `minHeight` and `minWidth` on `Box`
+
+* [#7432](https://github.com/Shopify/polaris/pull/7432) [`85c022033`](https://github.com/bekturfs/polaris/commit/85c02203356ac90af463c93bd054ec8932c8d82f) Thanks [@laurkim](https://github.com/laurkim)! - Added support for `overflowX`, `overflowY`, and `width` props to `Box`
+
+- [#7389](https://github.com/Shopify/polaris/pull/7389) [`4f184c658`](https://github.com/bekturfs/polaris/commit/4f184c658e2bcbacde41bc32b17be3e10998aba7) Thanks [@aveline](https://github.com/aveline)! - Added `breakWord` prop to `Text`
+
+* [#7430](https://github.com/Shopify/polaris/pull/7430) [`87981ac01`](https://github.com/bekturfs/polaris/commit/87981ac01055b913223bb16ca1db1a109419163f) Thanks [@aveline](https://github.com/aveline)! - Added `legend` as supported element for `Text` component
+
+- [#7438](https://github.com/Shopify/polaris/pull/7438) [`4b4411930`](https://github.com/bekturfs/polaris/commit/4b4411930587535bb4bb85e4b8e2eca13949f8b6) Thanks [@aveline](https://github.com/aveline)! - Simplify `AlphaCard` by removing `hasBorderRadius` prop and `shadow` prop
+
+### Patch Changes
+
+- [#7405](https://github.com/Shopify/polaris/pull/7405) [`ea2615881`](https://github.com/bekturfs/polaris/commit/ea2615881194c2b8d77df528a5b16bf9c9cad485) Thanks [@laurkim](https://github.com/laurkim)! - Fixed how optional `id` prop rendered in `Text`
+
+* [#7434](https://github.com/Shopify/polaris/pull/7434) [`62288755a`](https://github.com/bekturfs/polaris/commit/62288755a3ab5301a4b78be38b92f4775bd188aa) Thanks [@laurkim](https://github.com/laurkim)! - Fixed reference to `width` custom property in `Box`
+
+- [#7396](https://github.com/Shopify/polaris/pull/7396) [`3be27bae8`](https://github.com/bekturfs/polaris/commit/3be27bae839406e399d8e476d4d30b1f1791d96f) Thanks [@laurkim](https://github.com/laurkim)! - Updated alias and scale types in `Box` with type tests to check they exist in our token groups.
+  Updated `get-props` script to parse utility types with unions.
+
+* [#7435](https://github.com/Shopify/polaris/pull/7435) [`4097d539b`](https://github.com/bekturfs/polaris/commit/4097d539bcfe61b404d2123190b3756f7968edfb) Thanks [@kyledurand](https://github.com/kyledurand)! - Cleaned up styles on Box
+
+- [#7410](https://github.com/Shopify/polaris/pull/7410) [`13546e344`](https://github.com/bekturfs/polaris/commit/13546e3444bb75c3e6494503eb44adb32f5c5eb4) Thanks [@kyledurand](https://github.com/kyledurand)! - Apply default value to Columns
+
+* [#7433](https://github.com/Shopify/polaris/pull/7433) [`90487fd70`](https://github.com/bekturfs/polaris/commit/90487fd7010966df8af768e6b1885dd00f630c2d) Thanks [@kellymiller-shop](https://github.com/kellymiller-shop)! - fixed heading offset on IndexTable
+
+- [#7453](https://github.com/Shopify/polaris/pull/7453) [`3191d13c0`](https://github.com/bekturfs/polaris/commit/3191d13c09aa5136aaa56f574b884dc80e2dd3c9) Thanks [@AndrewMusgrave](https://github.com/AndrewMusgrave)! - Fixed IndexTable not rendering bulk actions on resize
+
+* [#7395](https://github.com/Shopify/polaris/pull/7395) [`89fea23f7`](https://github.com/bekturfs/polaris/commit/89fea23f79eca98f0662bcbc7d839db085cca9b5) Thanks [@AndrewMusgrave](https://github.com/AndrewMusgrave)! - Fixed scrolling performance for IndexTable on safari
+
+- [#7442](https://github.com/Shopify/polaris/pull/7442) [`77057d5b6`](https://github.com/bekturfs/polaris/commit/77057d5b682b6a5e30d13ebed67ceddecd5dde44) Thanks [@kyledurand](https://github.com/kyledurand)! - Fix SkeletonPage actions layout
+
 ## 10.8.0
 
 ### Minor Changes
