@@ -10,6 +10,7 @@ import image from '@rollup/plugin-image';
 import json from '@rollup/plugin-json';
 
 import {styles} from './config/rollup/plugin-styles.js';
+import {generateSassBuild} from "./config/rollup/generate-sass-build.js"
 import {generateScopedName} from './config/rollup/namespaced-classname.js';
 import postcssPlugins from './config/postcss-plugins.js';
 
@@ -46,6 +47,7 @@ function generateConfig({output, targets, stylesConfig}) {
         compact: true,
       }),
       styles(stylesConfig),
+      generateSassBuild()
     ],
     output,
   };
