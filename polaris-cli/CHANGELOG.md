@@ -1,5 +1,12 @@
 # @shopify/plugin-polaris
 
+## 0.0.12
+
+### Patch Changes
+
+- Updated dependencies [[`dc2990acf`](https://github.com/bekturfs/polaris/commit/dc2990acf1071c2bae352bce6fc5a28092b9f52f), [`8fb215836`](https://github.com/bekturfs/polaris/commit/8fb2158368945ad1e58b6e3ff74567b80b652757), [`6d82e8965`](https://github.com/bekturfs/polaris/commit/6d82e896587bacec60471e06fa81b2c61518551f), [`0591db26a`](https://github.com/bekturfs/polaris/commit/0591db26a4d13a5640245e433f61f77bf1be88d4), [`699b70713`](https://github.com/bekturfs/polaris/commit/699b707132bfe486785955084961bcb91753fb2a), [`933a9d71b`](https://github.com/bekturfs/polaris/commit/933a9d71b71b172657bbaf050cfc8793e39a49c0), [`a0fa96ed4`](https://github.com/bekturfs/polaris/commit/a0fa96ed4eaf53652feb5ee0d79aeec1c84f5d12)]:
+  - @shopify/polaris-migrator@0.6.0
+
 ## 0.0.11
 
 ### Patch Changes
